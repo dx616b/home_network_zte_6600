@@ -27,7 +27,7 @@
   "timezone": "browser",
   "title": "ZTE F6600P Full Monitoring",
   "uid": "zte-f6600p-full",
-  "version": 4,
+  "version": 5,
   "templating": {
     "list": [
       {
@@ -374,7 +374,8 @@
     {
       "id": 12,
       "type": "stat",
-      "title": "Downloaded (range)",
+      "title": "Downloaded (time range)",
+      "description": "Dashboard time picker (top right), e.g. Last 24h — not MTD and not modem reboot counter.",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -389,7 +390,8 @@
     {
       "id": 13,
       "type": "stat",
-      "title": "Uploaded (range)",
+      "title": "Uploaded (time range)",
+      "description": "Upload bytes for the dashboard time picker only.",
       "gridPos": { "h": 4, "w": 4, "x": 20, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -432,42 +434,60 @@
     {
       "id": 16,
       "type": "stat",
-      "title": "MTD Download",
+      "title": "MTD Download (May 1 → now)",
+      "description": "Since 00:00 May 1. Requires Prometheus samples since month start (retention ≥ 31d).",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 15 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
-      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        { "refId": "A", "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))" }
-      ]
-    },
-    {
-      "id": 17,
-      "type": "stat",
-      "title": "MTD Upload",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 15 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "timeFrom": "now/M",
-      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        { "refId": "A", "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))" }
-      ]
-    },
-    {
-      "id": 18,
-      "type": "stat",
-      "title": "MTD Total",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 15 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "MTD Upload (May 1 → now)",
+      "description": "Upload since start of month.",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "timeTo": "now",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "MTD Total (May 1 → now)",
+      "description": "Download + upload since May 1.",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "timeTo": "now",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
         }
       ]
     },
@@ -475,15 +495,19 @@
       "id": 19,
       "type": "stat",
       "title": "MTD Total (TB)",
+      "description": "MTD total in decimal terabytes (÷ 10¹²).",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 15 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "none", "decimals": 4 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12"
+          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12",
+          "instant": true,
+          "range": false
         }
       ]
     },

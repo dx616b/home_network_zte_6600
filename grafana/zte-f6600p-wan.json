@@ -203,7 +203,8 @@
     {
       "id": 9,
       "type": "stat",
-      "title": "Downloaded",
+      "title": "Downloaded (time range)",
+      "description": "Bytes downloaded in the dashboard time picker (top right), e.g. Last 24 hours. Not the same as MTD or modem reboot counter.",
       "gridPos": { "h": 5, "w": 6, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -222,7 +223,8 @@
     {
       "id": 10,
       "type": "stat",
-      "title": "Uploaded",
+      "title": "Uploaded (time range)",
+      "description": "Bytes uploaded in the dashboard time picker (top right).",
       "gridPos": { "h": 5, "w": 6, "x": 6, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -241,7 +243,8 @@
     {
       "id": 11,
       "type": "stat",
-      "title": "Total (down + up)",
+      "title": "Total (time range)",
+      "description": "Download + upload for the dashboard time picker only.",
       "gridPos": { "h": 5, "w": 6, "x": 12, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -260,8 +263,8 @@
     {
       "id": 12,
       "type": "stat",
-      "title": "Modem counter (download)",
-      "description": "Raw value on the ONT — drops to 0 on reboot. Use panels above for monthly totals.",
+      "title": "Modem RX counter (since reboot)",
+      "description": "Raw counter on the ONT right now — resets to 0 on reboot. Usually larger than “last 24h”. Do not use for billing; use MTD or time-range panels.",
       "gridPos": { "h": 5, "w": 6, "x": 18, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
@@ -280,7 +283,8 @@
     {
       "id": 13,
       "type": "timeseries",
-      "title": "Cumulative WAN bytes (monotonic — use for monthly totals)",
+      "title": "Cumulative WAN bytes (exporter, survives reboot)",
+      "description": "Monotonic totals kept by the exporter across modem reboots. For billing this month use MTD row below.",
       "gridPos": { "h": 7, "w": 24, "x": 0, "y": 21 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
@@ -297,12 +301,12 @@
         {
           "refId": "A",
           "expr": "zte_wan_rx_bytes_total{connection=\"$connection\"}",
-          "legendFormat": "Download total"
+          "legendFormat": "Download (cumulative)"
         },
         {
           "refId": "B",
           "expr": "zte_wan_tx_bytes_total{connection=\"$connection\"}",
-          "legendFormat": "Upload total"
+          "legendFormat": "Upload (cumulative)"
         }
       ]
     },
@@ -316,51 +320,60 @@
     {
       "id": 15,
       "type": "stat",
-      "title": "MTD Download",
-      "description": "From 1st day 00:00 to now (bytes from internet)",
+      "title": "MTD Download (May 1 → now)",
+      "description": "Uses this panel’s time (May 1 → now) via $__range. Needs Prometheus samples back to May 1 (retention ≥ 31d).",
       "gridPos": { "h": 5, "w": 6, "x": 0, "y": 29 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))"
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
       "id": 16,
       "type": "stat",
-      "title": "MTD Upload",
-      "description": "From 1st day 00:00 to now (bytes to internet)",
+      "title": "MTD Upload (May 1 → now)",
+      "description": "Upload since start of month (same window as MTD download).",
       "gridPos": { "h": 5, "w": 6, "x": 6, "y": 29 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
       "id": 17,
       "type": "stat",
-      "title": "MTD Total (down + up)",
-      "description": "From 1st day 00:00 to now (total bytes)",
+      "title": "MTD Total (May 1 → now)",
+      "description": "Download + upload since start of month.",
       "gridPos": { "h": 5, "w": 6, "x": 12, "y": 29 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
+          "instant": true,
+          "range": false
         }
       ]
     },
@@ -368,16 +381,19 @@
       "id": 18,
       "type": "stat",
       "title": "MTD Total (TB)",
-      "description": "Decimal TB (bytes / 1e12), from 1st day 00:00 to now",
+      "description": "MTD total in decimal terabytes (÷ 10¹²).",
       "gridPos": { "h": 5, "w": 6, "x": 18, "y": 29 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
+      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "none", "decimals": 4 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
       "targets": [
         {
           "refId": "A",
-          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12"
+          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12",
+          "instant": true,
+          "range": false
         }
       ]
     }

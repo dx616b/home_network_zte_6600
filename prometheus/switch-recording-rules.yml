@@ -1,0 +1,18 @@
+# Optional: merge into Prometheus rule_files (or prometheus.d/).
+# Aliases IF-MIB counters to *_total names so rate()/increase() lint is quiet in Grafana.
+groups:
+  - name: switch_snmp_counters
+    interval: 30s
+    rules:
+      - record: ifHCInOctets_total
+        expr: ifHCInOctets
+      - record: ifHCOutOctets_total
+        expr: ifHCOutOctets
+      - record: ifInErrors_total
+        expr: ifInErrors
+      - record: ifOutErrors_total
+        expr: ifOutErrors
+      - record: ifInDiscards_total
+        expr: ifInDiscards
+      - record: ifOutDiscards_total
+        expr: ifOutDiscards
