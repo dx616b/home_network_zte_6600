@@ -1,0 +1,28 @@
+services:
+  zte-exporter:
+    build: ./exporter
+    image: zte-f6600p-exporter:latest
+    container_name: zte-f6600p-exporter
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - zte-exporter-data:/data
+    ports:
+      - "9105:9105"
+
+  snmp-exporter:
+    image: prom/snmp-exporter:latest
+    container_name: snmp-exporter
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/snmp_exporter/snmp.yml
+      - --config.file=/etc/snmp_exporter/bridge.d/bridge_mib.yml
+    volumes:
+      - ./prometheus/snmp-bridge-mib.yml:/etc/snmp_exporter/bridge.d/bridge_mib.yml:ro
+    ports:
+      - "9116:9116"
+
+volumes:
+  zte-exporter-data:
+    # Bridge + port map: works on Docker Desktop (Windows/Mac).
+    # On Linux server (mon.router.al) you may use network_mode: host instead.

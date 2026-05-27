@@ -1,0 +1,10 @@
+# Merge into prometheus.yml on mon.router.al
+scrape_configs:
+  - job_name: zte_f6600p_wan
+    scrape_interval: 15s
+    scrape_timeout: 12s
+    static_configs:
+      - targets: ["mon.router.al:9105"]
+        labels:
+          device: zte-f6600p
+          site: home

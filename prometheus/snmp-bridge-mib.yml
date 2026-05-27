@@ -1,0 +1,76 @@
+# Extra snmp_exporter module (merged with image default snmp.yml via --config.file).
+# MAC table + bridge port -> ifIndex mapping (BRIDGE-MIB).
+modules:
+  bridge_mib:
+    walk:
+      - 1.3.6.1.2.1.17.1.4
+      - 1.3.6.1.2.1.17.4.3
+    metrics:
+      - name: dot1dBasePortIfIndex
+        oid: 1.3.6.1.2.1.17.1.4.1.2
+        type: gauge
+        help: ifIndex for this bridge port - 1.3.6.1.2.1.17.1.4.1.2
+        indexes:
+          - labelname: dot1dBasePort
+            type: gauge
+      - name: dot1dBasePortCircuit
+        oid: 1.3.6.1.2.1.17.1.4.1.3
+        type: OctetString
+        help: Port circuit OID - 1.3.6.1.2.1.17.1.4.1.3
+        indexes:
+          - labelname: dot1dBasePort
+            type: gauge
+      - name: dot1dBasePortDelayExceededDiscards
+        oid: 1.3.6.1.2.1.17.1.4.1.4
+        type: counter
+        help: Frames discarded due to excessive transit delay - 1.3.6.1.2.1.17.1.4.1.4
+        indexes:
+          - labelname: dot1dBasePort
+            type: gauge
+      - name: dot1dBasePortMtuExceededDiscards
+        oid: 1.3.6.1.2.1.17.1.4.1.5
+        type: counter
+        help: Frames discarded due to excessive size - 1.3.6.1.2.1.17.1.4.1.5
+        indexes:
+          - labelname: dot1dBasePort
+            type: gauge
+      - name: dot1dTpFdbAddress
+        oid: 1.3.6.1.2.1.17.4.3.1.1
+        type: PhysAddress48
+        help: MAC address in bridge forwarding table - 1.3.6.1.2.1.17.4.3.1.1
+        indexes:
+          - labelname: dot1dTpFdbAddress
+            type: PhysAddress48
+            fixed_size: 6
+        lookups:
+          - labels: [dot1dTpFdbAddress]
+            labelname: dot1dTpFdbPort
+            oid: 1.3.6.1.2.1.17.4.3.1.2
+            type: gauge
+          - labels: [dot1dTpFdbPort]
+            labelname: dot1dBasePortIfIndex
+            oid: 1.3.6.1.2.1.17.1.4.1.2
+            type: gauge
+      - name: dot1dTpFdbStatus
+        oid: 1.3.6.1.2.1.17.4.3.1.3
+        type: EnumAsInfo
+        help: FDB entry status - 1.3.6.1.2.1.17.4.3.1.3
+        indexes:
+          - labelname: dot1dTpFdbAddress
+            type: PhysAddress48
+            fixed_size: 6
+        lookups:
+          - labels: [dot1dTpFdbAddress]
+            labelname: dot1dTpFdbPort
+            oid: 1.3.6.1.2.1.17.4.3.1.2
+            type: gauge
+          - labels: [dot1dTpFdbPort]
+            labelname: dot1dBasePortIfIndex
+            oid: 1.3.6.1.2.1.17.1.4.1.2
+            type: gauge
+        enum_values:
+          1: other
+          2: invalid
+          3: learned
+          4: self
+          5: mgmt

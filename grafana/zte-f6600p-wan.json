@@ -1,0 +1,385 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["zte", "wan", "f6600p"],
+  "time": { "from": "now-24h", "to": "now" },
+  "timezone": "browser",
+  "title": "ZTE F6600P WAN Usage",
+  "uid": "zte-f6600p-wan",
+  "version": 2,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "pluginId": "prometheus",
+        "label": "Prometheus",
+        "query": "prometheus",
+        "refresh": 1,
+        "current": {}
+      },
+      {
+        "name": "connection",
+        "type": "query",
+        "label": "WAN connection",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": {
+          "query": "label_values(zte_wan_rx_bytes_total, connection)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "internet", "value": "internet" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Exporter",
+      "description": "1 = WAN counters scraped successfully on last cycle",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [{ "refId": "A", "expr": "zte_exporter_up" }]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "WAN scrape",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "FAIL", "color": "red" },
+                "1": { "text": "OK", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [{ "refId": "A", "expr": "zte_scrape_success{subsystem=\"wan\"}" }]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Peak download (period)",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "Mbits", "decimals": 1 } },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["max"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "8 * max_over_time(rate(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__rate_interval])[$__range:]) / 1e6"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Peak upload (period)",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "Mbits", "decimals": 1 } },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["max"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "8 * max_over_time(rate(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__rate_interval])[$__range:]) / 1e6"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Throughput",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "WAN throughput",
+      "description": "Internet totals (all LAN + Wi‑Fi) from modem WAN counters",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbits",
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "spanNulls": true }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Download" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Upload" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max", "last"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "8 * rate(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
+          "legendFormat": "Download"
+        },
+        {
+          "refId": "B",
+          "expr": "8 * rate(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
+          "legendFormat": "Upload"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "Data used (selected time range)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Downloaded",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Uploaded",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Total (down + up)",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Modem counter (download)",
+      "description": "Raw value on the ONT — drops to 0 on reboot. Use panels above for monthly totals.",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "zte_wan_modem_rx_bytes{connection=\"$connection\"}"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Cumulative WAN bytes (monotonic — use for monthly totals)",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "zte_wan_rx_bytes_total{connection=\"$connection\"}",
+          "legendFormat": "Download total"
+        },
+        {
+          "refId": "B",
+          "expr": "zte_wan_tx_bytes_total{connection=\"$connection\"}",
+          "legendFormat": "Upload total"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Month to date (from 1st of month)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "collapsed": false
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "MTD Download",
+      "description": "From 1st day 00:00 to now (bytes from internet)",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "MTD Upload",
+      "description": "From 1st day 00:00 to now (bytes to internet)",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "MTD Total (down + up)",
+      "description": "From 1st day 00:00 to now (total bytes)",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "MTD Total (TB)",
+      "description": "Decimal TB (bytes / 1e12), from 1st day 00:00 to now",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 4 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12"
+        }
+      ]
+    }
+  ]
+}

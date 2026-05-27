@@ -1,0 +1,10 @@
+# On mon.router.al — append to prometheus.yml or put in /etc/prometheus/prometheus.d/zte-f6600p.yml
+
+scrape_configs:
+  - job_name: zte_f6600p_wan
+    scrape_interval: 15s
+    scrape_timeout: 12s
+    static_configs:
+      - targets: ["mon.router.al:9105"]
+        labels:
+          device: zte-f6600p

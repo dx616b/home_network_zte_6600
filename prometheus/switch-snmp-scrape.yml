@@ -1,0 +1,57 @@
+scrape_configs:
+  - job_name: snmp_switch_main
+    scrape_interval: 30s
+    scrape_timeout: 20s
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+    static_configs:
+      - targets: ["192.168.1.254"]
+        labels:
+          device: main-switch
+          site: home
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: mon.router.al:9116
+
+  - job_name: snmp_switch_bridge
+    scrape_interval: 60s
+    scrape_timeout: 45s
+    metrics_path: /snmp
+    params:
+      module: [bridge_mib]
+    static_configs:
+      - targets: ["192.168.1.254"]
+        labels:
+          device: main-switch
+          site: home
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: mon.router.al:9116
+
+  - job_name: snmp_switch_system
+    scrape_interval: 120s
+    scrape_timeout: 15s
+    metrics_path: /snmp
+    params:
+      module: [system]
+    static_configs:
+      - targets: ["192.168.1.254"]
+        labels:
+          device: main-switch
+          site: home
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: mon.router.al:9116
