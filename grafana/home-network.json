@@ -27,7 +27,7 @@
   "timezone": "browser",
   "title": "Home network (modem + switch)",
   "uid": "home-network-correlation",
-  "version": 1,
+  "version": 2,
   "templating": {
     "list": [
       {
@@ -38,18 +38,6 @@
         "query": "prometheus",
         "refresh": 1,
         "current": {}
-      },
-      {
-        "name": "connection",
-        "type": "query",
-        "label": "WAN connection",
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "query": {
-          "query": "label_values(zte_wan_rx_bytes_total, connection)",
-          "refId": "StandardVariableQuery"
-        },
-        "refresh": 2,
-        "current": { "text": "internet", "value": "internet" }
       },
       {
         "name": "uplink_port",
@@ -77,7 +65,7 @@
       "id": 2,
       "type": "stat",
       "title": "Modem exporter",
-      "gridPos": { "h": 3, "w": 4, "x": 0, "y": 1 },
+      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
@@ -93,7 +81,7 @@
       "id": 3,
       "type": "stat",
       "title": "Switch IF-MIB",
-      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 1 },
+      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
@@ -109,7 +97,7 @@
       "id": 4,
       "type": "stat",
       "title": "Switch bridge MIB",
-      "gridPos": { "h": 3, "w": 4, "x": 8, "y": 1 },
+      "gridPos": { "h": 3, "w": 3, "x": 6, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
@@ -124,71 +112,83 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "WAN download now",
-      "gridPos": { "h": 3, "w": 4, "x": 12, "y": 1 },
+      "title": "Download now",
+      "description": "Modem LAN TX = download from internet (64-bit counters).",
+      "gridPos": { "h": 3, "w": 3, "x": 9, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": { "defaults": { "unit": "Mbits", "decimals": 2 } },
+      "fieldConfig": { "defaults": { "unit": "bps", "decimals": 1 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "8 * rate(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6"
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(8 * rate(zte_lan_tx_bytes_total[$__rate_interval]))" }]
     },
     {
       "id": 6,
       "type": "stat",
-      "title": "WAN upload now",
-      "gridPos": { "h": 3, "w": 4, "x": 16, "y": 1 },
+      "title": "Upload now",
+      "description": "Modem LAN RX = upload to internet (64-bit counters).",
+      "gridPos": { "h": 3, "w": 3, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": { "defaults": { "unit": "Mbits", "decimals": 2 } },
+      "fieldConfig": { "defaults": { "unit": "bps", "decimals": 1 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "8 * rate(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6"
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(8 * rate(zte_lan_rx_bytes_total[$__rate_interval]))" }]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "WiFi clients",
+      "gridPos": { "h": 3, "w": 3, "x": 15, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "targets": [{ "refId": "A", "expr": "zte_wlan_clients" }]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Eth clients",
+      "gridPos": { "h": 3, "w": 3, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area", "colorMode": "value" },
+      "targets": [{ "refId": "A", "expr": "zte_eth_clients" }]
     },
     {
       "id": 7,
       "type": "stat",
       "title": "Uplink port now",
       "description": "Total Mbps on selected switch port (default Port 1 = modem cable).",
-      "gridPos": { "h": 3, "w": 4, "x": 20, "y": 1 },
+      "gridPos": { "h": 3, "w": 3, "x": 21, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": { "defaults": { "unit": "Mbits", "decimals": 2 } },
+      "fieldConfig": { "defaults": { "unit": "bps", "decimals": 1 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "area" },
       "targets": [
         {
           "refId": "A",
-          "expr": "(8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval])) / 1e6"
+          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval])"
         }
       ]
     },
     {
       "id": 10,
       "type": "row",
-      "title": "WAN vs switch uplink",
+      "title": "Modem LAN vs switch uplink",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
       "collapsed": false
     },
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Download: WAN vs switch uplink",
-      "description": "WAN RX should track traffic on the port cabled to the modem (usually Port 1). Large gaps may mean another path or counter mismatch.",
+      "title": "Download: modem LAN TX vs switch uplink in",
+      "description": "Modem LAN TX (64-bit counters) should track switch uplink In on the port cabled to the modem.",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
+          "unit": "bps",
           "custom": { "drawStyle": "line", "fillOpacity": 12, "lineWidth": 2, "spanNulls": true }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "WAN download" },
+            "matcher": { "id": "byName", "options": "Modem LAN download" },
             "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
           },
           {
@@ -201,12 +201,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "8 * rate(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
-          "legendFormat": "WAN download"
+          "expr": "sum(8 * rate(zte_lan_tx_bytes_total[$__rate_interval]))",
+          "legendFormat": "Modem LAN download"
         },
         {
           "refId": "B",
-          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval])",
           "legendFormat": "Switch uplink in"
         }
       ]
@@ -214,17 +214,18 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Upload: WAN vs switch uplink",
+      "title": "Upload: modem LAN RX vs switch uplink out",
+      "description": "Modem LAN RX (64-bit counters) should track switch uplink Out.",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
+          "unit": "bps",
           "custom": { "drawStyle": "line", "fillOpacity": 12, "lineWidth": 2, "spanNulls": true }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "WAN upload" },
+            "matcher": { "id": "byName", "options": "Modem LAN upload" },
             "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
           },
           {
@@ -237,12 +238,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "8 * rate(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
-          "legendFormat": "WAN upload"
+          "expr": "sum(8 * rate(zte_lan_rx_bytes_total[$__rate_interval]))",
+          "legendFormat": "Modem LAN upload"
         },
         {
           "refId": "B",
-          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=\"$uplink_port\"}[$__rate_interval])",
           "legendFormat": "Switch uplink out"
         }
       ]
@@ -255,7 +256,7 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
+          "unit": "bps",
           "custom": { "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "spanNulls": true }
         }
       },
@@ -263,7 +264,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(5, (8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval])) / 1e6)",
+          "expr": "topk(5, 8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval]))",
           "legendFormat": "{{ifName}}"
         }
       ]
@@ -415,25 +416,20 @@
     {
       "id": 32,
       "type": "timeseries",
-      "title": "Modem WAN / LAN errors",
+      "title": "Modem LAN errors",
       "gridPos": { "h": 6, "w": 12, "x": 12, "y": 31 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "spanNulls": true } } },
       "targets": [
         {
           "refId": "A",
-          "expr": "rate(zte_wan_errors_received_total{connection=\"$connection\"}[$__rate_interval])",
-          "legendFormat": "WAN RX err"
+          "expr": "rate(zte_lan_rx_errors_total[$__rate_interval])",
+          "legendFormat": "LAN RX err {{port}}"
         },
         {
           "refId": "B",
-          "expr": "rate(zte_wan_errors_sent_total{connection=\"$connection\"}[$__rate_interval])",
-          "legendFormat": "WAN TX err"
-        },
-        {
-          "refId": "C",
-          "expr": "rate(zte_lan_rx_errors_total[$__rate_interval])",
-          "legendFormat": "LAN RX {{port}}"
+          "expr": "rate(zte_lan_tx_errors_total[$__rate_interval])",
+          "legendFormat": "LAN TX err {{port}}"
         }
       ]
     }

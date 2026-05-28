@@ -148,7 +148,7 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
+          "unit": "bps",
           "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }
         }
       },
@@ -156,7 +156,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(5, (8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval])) / 1e6)",
+          "expr": "topk(5, 8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval]))",
           "legendFormat": "{{ifName}}"
         }
       ]
@@ -183,30 +183,31 @@
             ]
           },
           { "matcher": { "id": "byName", "options": "Speed Mbps" }, "properties": [{ "id": "unit", "value": "Mbits" }] },
-          { "matcher": { "id": "byName", "options": "In Mbps" }, "properties": [{ "id": "unit", "value": "Mbits" }] },
-          { "matcher": { "id": "byName", "options": "Out Mbps" }, "properties": [{ "id": "unit", "value": "Mbits" }] },
+          { "matcher": { "id": "byName", "options": "In" }, "properties": [{ "id": "unit", "value": "bps" }] },
+          { "matcher": { "id": "byName", "options": "Out" }, "properties": [{ "id": "unit", "value": "bps" }] },
+          { "matcher": { "id": "byName", "options": "Total" }, "properties": [{ "id": "unit", "value": "bps" }] },
           { "matcher": { "id": "byName", "options": "Util %" }, "properties": [{ "id": "unit", "value": "percent" }, { "id": "max", "value": 100 }] }
         ]
       },
-      "options": { "showHeader": true, "cellHeight": "sm", "sortBy": [{ "desc": true, "displayName": "Total Mbps" }] },
+      "options": { "showHeader": true, "cellHeight": "sm", "sortBy": [{ "desc": true, "displayName": "Total" }] },
       "targets": [
         { "refId": "A", "expr": "ifOperStatus{instance=\"192.168.1.254\"}", "format": "table", "instant": true },
         { "refId": "B", "expr": "ifHighSpeed{instance=\"192.168.1.254\"}", "format": "table", "instant": true },
         {
           "refId": "C",
-          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval])",
           "format": "table",
           "instant": true
         },
         {
           "refId": "D",
-          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval])",
           "format": "table",
           "instant": true
         },
         {
           "refId": "E",
-          "expr": "(8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval])) / 1e6",
+          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\"}[$__rate_interval]) + 8 * rate(ifHCOutOctets{instance=\"192.168.1.254\"}[$__rate_interval])",
           "format": "table",
           "instant": true
         },
@@ -241,9 +242,9 @@
             "renameByName": {
               "Value #A": "Link",
               "Value #B": "Speed Mbps",
-              "Value #C": "In Mbps",
-              "Value #D": "Out Mbps",
-              "Value #E": "Total Mbps",
+              "Value #C": "In",
+              "Value #D": "Out",
+              "Value #E": "Total",
               "Value #F": "Util %",
               "ifName": "Port"
             }
@@ -259,7 +260,7 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
+          "unit": "bps",
           "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "spanNulls": true }
         }
       },
@@ -267,12 +268,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCInOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval])",
           "legendFormat": "{{ifName}} in"
         },
         {
           "refId": "B",
-          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval]) / 1e6",
+          "expr": "8 * rate(ifHCOutOctets{instance=\"192.168.1.254\", ifName=~\"$port\"}[$__rate_interval])",
           "legendFormat": "{{ifName}} out"
         }
       ]

@@ -25,7 +25,7 @@ ZTE_USERNAME = os.environ.get("ZTE_USERNAME", "root")
 ZTE_PASSWORD = os.environ.get("ZTE_PASSWORD", "")
 LISTEN_HOST = os.environ.get("LISTEN_HOST", "0.0.0.0")
 LISTEN_PORT = int(os.environ.get("LISTEN_PORT", "9105"))
-SCRAPE_INTERVAL = int(os.environ.get("SCRAPE_INTERVAL", "30"))
+SCRAPE_INTERVAL = int(os.environ.get("SCRAPE_INTERVAL", "5"))
 WAN_NAME_FILTER = os.environ.get("WAN_NAME_FILTER", "internet")
 EXPORT_CLIENTS = os.environ.get("EXPORT_CLIENTS", "false").lower() in ("1", "true", "yes")
 CLIENT_REVERSE_DNS = os.environ.get("CLIENT_REVERSE_DNS", "false").lower() in ("1", "true", "yes")
@@ -302,20 +302,27 @@ class WanByteTracker:
             fh.write(payload)
         os.replace(tmp, self.path)
 
-    def observe(self, key: str, rx_raw: int, tx_raw: int) -> tuple[int, int, int]:
-        """Return (cumulative_rx, cumulative_tx, resets_detected_this_call)."""
+    def observe(self, key: str, rx_raw: int, tx_raw: int) -> tuple[int, int, int, float, float]:
+        """Return cumulative totals, reset count, and modem-derived rx/tx bit rates."""
         entry = self._keys.setdefault(
             key,
-            {"rx_offset": 0, "tx_offset": 0, "rx_last": None, "tx_last": None},
+            {"rx_offset": 0, "tx_offset": 0, "rx_last": None, "tx_last": None,
+             "last_ts": None, "resets_total": 0},
         )
         resets = 0
+        now = time.time()
+        prev_ts = entry.get("last_ts")
+        rates_bps: dict[str, float] = {"rx": 0.0, "tx": 0.0}
         for field, raw in (("rx", rx_raw), ("tx", tx_raw)):
             last_key = f"{field}_last"
             offset_key = f"{field}_offset"
             last = entry.get(last_key)
-            if last is not None and raw < last:
-                entry[offset_key] = entry.get(offset_key, 0) + last
+            if last is not None and raw < int(last):
+                # Counter reset (modem reboot) — add previous high-water mark
+                # to offset and emit zero rate for this interval to avoid spike.
+                entry[offset_key] = entry.get(offset_key, 0) + int(last)
                 resets += 1
+                rates_bps[field] = 0.0
                 LOG.info(
                     "WAN %s %s counter reset (modem reboot?): %s -> %s, offset now %s",
                     key,
@@ -324,11 +331,16 @@ class WanByteTracker:
                     raw,
                     entry[offset_key],
                 )
+            elif last is not None and prev_ts is not None and now > float(prev_ts):
+                delta = raw - int(last)
+                rates_bps[field] = max(0.0, (float(delta) * 8.0) / (now - float(prev_ts)))
             entry[last_key] = raw
+        entry["last_ts"] = now
+        entry["resets_total"] = entry.get("resets_total", 0) + resets
         cumulative_rx = entry["rx_offset"] + rx_raw
         cumulative_tx = entry["tx_offset"] + tx_raw
         self._save()
-        return cumulative_rx, cumulative_tx, resets
+        return cumulative_rx, cumulative_tx, entry["resets_total"], rates_bps["rx"], rates_bps["tx"]
 
 
 class ZTECollector:
@@ -353,16 +365,21 @@ class ZTECollector:
         try:
             xml = self.client.fetch("ethWanConfig", "wan_internet_lua.lua", "TypeUplink=2&pageType=0")
             for inst in self.client.parse_instances(xml):
-                if not (inst.get("RxBytes") or inst.get("TxBytes")):
-                    continue
                 name = inst.get("WANCName", "")
                 if WAN_NAME_FILTER and name.lower() != WAN_NAME_FILTER.lower():
                     continue
+                # Skip instances where byte counters are absent or zero-string;
+                # but do NOT call _int() yet — we need to distinguish "missing"
+                # from genuine "0" to avoid false counter-reset detection.
+                rx_str = (inst.get("RxBytes") or "").strip()
+                tx_str = (inst.get("TxBytes") or "").strip()
+                if not rx_str and not tx_str:
+                    continue
                 labels = [name, inst.get("TransType") or inst.get("wantype", "unknown")]
-                rx_raw = _int(inst.get("RxBytes"))
-                tx_raw = _int(inst.get("TxBytes"))
+                rx_raw = _int(rx_str)
+                tx_raw = _int(tx_str)
                 key = f"{labels[0]}|{labels[1]}"
-                cumulative_rx, cumulative_tx, resets = self.wan_tracker.observe(key, rx_raw, tx_raw)
+                cumulative_rx, cumulative_tx, resets, rx_bps, tx_bps = self.wan_tracker.observe(key, rx_raw, tx_raw)
 
                 metrics.append(self._gauge_labeled(
                     "zte_wan_modem_rx_bytes",
@@ -388,14 +405,25 @@ class ZTECollector:
                     labels,
                     cumulative_tx,
                 ))
-                if resets:
-                    resets_metric = CounterMetricFamily(
-                        "zte_wan_counter_resets_total",
-                        "Modem WAN byte counter resets detected",
-                        labels=["connection", "type"],
-                    )
-                    resets_metric.add_metric(labels, resets)
-                    metrics.append(resets_metric)
+                metrics.append(self._gauge_labeled(
+                    "zte_wan_rx_bps",
+                    "Modem-derived WAN download rate in bits per second",
+                    labels,
+                    rx_bps,
+                ))
+                metrics.append(self._gauge_labeled(
+                    "zte_wan_tx_bps",
+                    "Modem-derived WAN upload rate in bits per second",
+                    labels,
+                    tx_bps,
+                ))
+                resets_metric = CounterMetricFamily(
+                    "zte_wan_counter_resets_total",
+                    "Modem WAN byte counter resets detected",
+                    labels=["connection", "type"],
+                )
+                resets_metric.add_metric(labels, resets)
+                metrics.append(resets_metric)
                 for prom, field, help_ in (
                     ("zte_wan_rx_packets_total", "RxPackets", "WAN download packets"),
                     ("zte_wan_tx_packets_total", "TxPackets", "WAN upload packets"),
@@ -457,6 +485,12 @@ class ZTECollector:
                 metrics.append(self._gauge("zte_memory_usage_percent", "Memory usage percent", [], _float(p["MemUsage"])))
             if "PowerOnTime" in p:
                 metrics.append(self._gauge("zte_modem_uptime_seconds", "Modem uptime seconds", [], _float(p["PowerOnTime"])))
+            if "Temp" in p:
+                metrics.append(self._gauge("zte_modem_temperature_celsius", "Modem SoC temperature", [], _float(p["Temp"])))
+            if "Flash_Percent_Used" in p:
+                metrics.append(self._gauge("zte_flash_usage_percent", "Flash storage usage percent", [], _float(p["Flash_Percent_Used"])))
+            if "TotalFlash" in p:
+                metrics.append(self._gauge("zte_flash_total_bytes", "Total flash storage bytes", [], _float(p["TotalFlash"])))
             info_labels = {
                 k: p[v] for k, v in (
                     ("model", "ModelName"), ("serial", "SerialNumber"),
@@ -497,6 +531,88 @@ class ZTECollector:
         except Exception as exc:
             LOG.warning("LAN scrape failed: %s", exc)
             scrape_ok.add_metric(["lan"], 0)
+
+        # --- WLAN interface traffic ---
+        try:
+            xml = self.client.fetch("localNetStatus", "wlan_wlanstatus_lua.lua")
+            # Build SSID alias→name map from instances without traffic data
+            ssid_names: dict[str, str] = {}
+            for inst in self.client.parse_instances(xml):
+                inst_id = inst.get("_InstID", "")
+                essid = inst.get("ESSID", "")
+                if essid and not inst.get("TotalBytesReceived"):
+                    ssid_names[inst_id] = essid
+            # Emit metrics for instances WITH traffic counters
+            for inst in self.client.parse_instances(xml):
+                if not inst.get("TotalBytesReceived") and not inst.get("TotalBytesSent"):
+                    continue
+                inst_id = inst.get("_InstID", "unknown")
+                ssid = ssid_names.get(inst_id, inst.get("Alias", inst_id))
+                band = inst.get("BandWidthInUsed", "")
+                radio = inst.get("WLANViewName", "")
+                labels = [inst_id, ssid, radio]
+                label_names = ["interface", "ssid", "radio"]
+                for prom, field, help_ in (
+                    ("zte_wlan_rx_bytes_total", "TotalBytesReceived", "WLAN interface bytes received"),
+                    ("zte_wlan_tx_bytes_total", "TotalBytesSent", "WLAN interface bytes sent"),
+                    ("zte_wlan_rx_packets_total", "TotalPacketsReceived", "WLAN interface packets received"),
+                    ("zte_wlan_tx_packets_total", "TotalPacketsSent", "WLAN interface packets sent"),
+                ):
+                    val = _int(inst.get(field))
+                    c = CounterMetricFamily(prom, help_, labels=label_names)
+                    c.add_metric(labels, val)
+                    metrics.append(c)
+                # Channel and bandwidth as info
+                if inst.get("ChannelInUsed"):
+                    g = GaugeMetricFamily("zte_wlan_channel", "WLAN channel in use", labels=label_names)
+                    g.add_metric(labels, _float(inst.get("ChannelInUsed")))
+                    metrics.append(g)
+            scrape_ok.add_metric(["wlan"], 1)
+        except Exception as exc:
+            LOG.warning("WLAN interface scrape failed: %s", exc)
+            scrape_ok.add_metric(["wlan"], 0)
+
+        # --- WLAN client stats ---
+        try:
+            xml = self.client.fetch("localNetStatus", "wlan_client_stat_lua.lua")
+            for inst in self.client.parse_instances(xml):
+                if not inst.get("MACAddress"):
+                    continue
+                mac = ZTECollector._norm_mac(inst.get("MACAddress", ""))
+                if not mac:
+                    continue
+                ip = inst.get("IPAddress", "")
+                ap = inst.get("AliasName", inst.get("_InstID", "unknown"))
+                labels = [mac, ip, ap]
+                label_names = ["mac", "ip", "interface"]
+                for prom, field, help_ in (
+                    ("zte_wlan_client_rx_bytes_total", "RXBytes", "WLAN client bytes received"),
+                    ("zte_wlan_client_tx_bytes_total", "TXBytes", "WLAN client bytes sent"),
+                    ("zte_wlan_client_rx_packets_total", "RXPackets", "WLAN client packets received"),
+                    ("zte_wlan_client_tx_packets_total", "TXPackets", "WLAN client packets sent"),
+                ):
+                    val = _int(inst.get(field))
+                    c = CounterMetricFamily(prom, help_, labels=label_names)
+                    c.add_metric(labels, val)
+                    metrics.append(c)
+                # Signal quality gauges
+                for prom, field, help_ in (
+                    ("zte_wlan_client_rssi_dbm", "RSSI", "WLAN client signal strength dBm"),
+                    ("zte_wlan_client_snr_db", "SNR", "WLAN client signal-to-noise ratio dB"),
+                    ("zte_wlan_client_noise_dbm", "NOISE", "WLAN client noise floor dBm"),
+                    ("zte_wlan_client_tx_rate_kbps", "TxRate", "WLAN client TX rate kbps"),
+                    ("zte_wlan_client_rx_rate_kbps", "RxRate", "WLAN client RX rate kbps"),
+                    ("zte_wlan_client_link_time_seconds", "LinkTime", "WLAN client connected time seconds"),
+                ):
+                    val = inst.get(field)
+                    if val:
+                        g = GaugeMetricFamily(prom, help_, labels=label_names)
+                        g.add_metric(labels, _float(val))
+                        metrics.append(g)
+            scrape_ok.add_metric(["wlan_clients"], 1)
+        except Exception as exc:
+            LOG.warning("WLAN client stats scrape failed: %s", exc)
+            scrape_ok.add_metric(["wlan_clients"], 0)
 
         # --- VoIP ---
         try:

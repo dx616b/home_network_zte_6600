@@ -1,0 +1,12 @@
+{
+  "keys": {
+    "internet|PPPoE": {
+      "rx_offset": 0,
+      "tx_offset": 0,
+      "rx_last": 2180667438,
+      "tx_last": 2459231871,
+      "last_ts": 1779914261.7178686,
+      "resets_total": 0
+    }
+  }
+}

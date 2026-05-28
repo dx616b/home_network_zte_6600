@@ -27,7 +27,7 @@
   "timezone": "browser",
   "title": "ZTE F6600P Full Monitoring",
   "uid": "zte-f6600p-full",
-  "version": 5,
+  "version": 6,
   "templating": {
     "list": [
       {
@@ -38,20 +38,6 @@
         "query": "prometheus",
         "refresh": 1,
         "current": {}
-      },
-      {
-        "name": "connection",
-        "type": "query",
-        "label": "WAN connection",
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "query": {
-          "query": "label_values(zte_wan_rx_bytes_total, connection)",
-          "refId": "StandardVariableQuery"
-        },
-        "refresh": 2,
-        "includeAll": false,
-        "multi": false,
-        "current": { "text": "internet", "value": "internet" }
       }
     ]
   },
@@ -72,21 +58,11 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "DOWN", "color": "red" },
-                "1": { "text": "UP", "color": "green" }
-              }
-            }
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
           ]
         }
       },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_exporter_up" }]
     },
     {
@@ -97,33 +73,14 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "min": 0,
-          "max": 1,
-          "unit": "none",
+          "min": 0, "max": 1,
           "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "FAIL", "color": "red" },
-                "1": { "text": "OK", "color": "green" }
-              }
-            }
+            { "type": "value", "options": { "0": { "text": "FAIL", "color": "red" }, "1": { "text": "OK", "color": "green" } } }
           ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
         }
       },
-      "options": {
-        "displayMode": "basic",
-        "orientation": "horizontal",
-        "showUnfilled": true,
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
+      "options": { "displayMode": "basic", "orientation": "horizontal", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_scrape_success", "legendFormat": "{{subsystem}}" }]
     },
     {
@@ -133,40 +90,43 @@
       "gridPos": { "h": 4, "w": 3, "x": 11, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "s" } },
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
+      "options": { "colorMode": "none", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_modem_uptime_seconds" }]
     },
     {
       "id": 5,
       "type": "stat",
       "title": "WiFi clients",
-      "gridPos": { "h": 4, "w": 3, "x": 14, "y": 1 },
+      "gridPos": { "h": 4, "w": 2, "x": 14, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_wlan_clients" }]
     },
     {
       "id": 9,
       "type": "stat",
-      "title": "Ethernet clients",
-      "gridPos": { "h": 4, "w": 3, "x": 17, "y": 1 },
+      "title": "Eth clients",
+      "gridPos": { "h": 4, "w": 2, "x": 16, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_eth_clients" }]
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "SoC temp",
+      "gridPos": { "h": 4, "w": 2, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius", "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 60 }, { "color": "red", "value": 75 }] }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "zte_modem_temperature_celsius" }]
     },
     {
       "id": 6,
@@ -177,375 +137,281 @@
       "fieldConfig": {
         "defaults": { "custom": { "align": "auto", "inspect": false } },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Time" },
-            "properties": [{ "id": "custom.hidden", "value": true }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Value" },
-            "properties": [{ "id": "custom.hidden", "value": true }]
-          }
+          { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] },
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hidden", "value": true }] }
         ]
       },
-      "options": {
-        "showHeader": false,
-        "cellHeight": "sm",
-        "footer": { "show": false }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "zte_modem_info_info",
-          "format": "table",
-          "instant": true
-        }
-      ],
+      "options": { "showHeader": false, "cellHeight": "sm", "footer": { "show": false } },
+      "targets": [{ "refId": "A", "expr": "zte_modem_info_info", "format": "table", "instant": true }],
       "transformations": [
         { "id": "labelsToFields", "options": { "mode": "columns" } },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": { "Time": true, "Value": true, "__name__": true },
-            "renameByName": {
-              "model": "Model",
-              "software": "Software",
-              "hardware": "Hardware",
-              "serial": "Serial",
-              "manufacturer": "Manufacturer"
-            }
-          }
-        }
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true }, "renameByName": { "model": "Model", "software": "Software", "hardware": "Hardware", "serial": "Serial", "manufacturer": "Manufacturer" } } }
       ]
     },
     {
       "id": 7,
       "type": "table",
       "title": "WiFi clients",
-      "description": "From modem hiddenData accessdev_data DeveiceType=WLAN. Requires EXPORT_CLIENTS=true.",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 5 },
+      "description": "Requires EXPORT_CLIENTS=true.",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 5 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": { "show": false }
-      },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "inspect": false } },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "zte_client_info_info{access=\"wlan\"}",
-          "format": "table",
-          "instant": true
-        }
-      ],
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
+      "targets": [{ "refId": "A", "expr": "zte_client_info_info{access=\"wlan\"}", "format": "table", "instant": true }],
       "transformations": [
         { "id": "labelsToFields", "options": { "mode": "columns" } },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true,
-              "__name__": true,
-              "device": true,
-              "instance": true,
-              "job": true,
-              "site": true,
-              "access": true
-            },
-            "indexByName": {
-              "ip": 0,
-              "hostname": 1,
-              "dns_name": 2,
-              "mac": 3,
-              "modem_hostname": 4,
-              "interface": 5
-            },
-            "renameByName": {
-              "mac": "MAC",
-              "hostname": "Hostname",
-              "dns_name": "DNS (PTR)",
-              "modem_hostname": "Modem name",
-              "ip": "IP",
-              "interface": "Interface"
-            }
-          }
-        }
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "device": true, "instance": true, "job": true, "site": true, "access": true }, "indexByName": { "ip": 0, "hostname": 1, "dns_name": 2, "mac": 3, "modem_hostname": 4, "interface": 5 }, "renameByName": { "mac": "MAC", "hostname": "Hostname", "dns_name": "DNS (PTR)", "modem_hostname": "Modem name", "ip": "IP", "interface": "Interface" } } }
       ]
     },
     {
       "id": 8,
       "type": "table",
       "title": "Ethernet clients",
-      "description": "From modem hiddenData accessdev_data DeveiceType=ETH.",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 5 },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 5 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": { "show": false }
-      },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "inspect": false } },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "zte_client_info_info{access=\"eth\"}",
-          "format": "table",
-          "instant": true
-        }
-      ],
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
+      "targets": [{ "refId": "A", "expr": "zte_client_info_info{access=\"eth\"}", "format": "table", "instant": true }],
       "transformations": [
         { "id": "labelsToFields", "options": { "mode": "columns" } },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true,
-              "__name__": true,
-              "device": true,
-              "instance": true,
-              "job": true,
-              "site": true,
-              "access": true
-            },
-            "indexByName": {
-              "ip": 0,
-              "hostname": 1,
-              "dns_name": 2,
-              "mac": 3,
-              "modem_hostname": 4,
-              "interface": 5
-            },
-            "renameByName": {
-              "mac": "MAC",
-              "hostname": "Hostname",
-              "dns_name": "DNS (PTR)",
-              "modem_hostname": "Modem name",
-              "ip": "IP",
-              "interface": "Interface"
-            }
-          }
-        }
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "device": true, "instance": true, "job": true, "site": true, "access": true }, "indexByName": { "ip": 0, "hostname": 1, "dns_name": 2, "mac": 3, "modem_hostname": 4, "interface": 5 }, "renameByName": { "mac": "MAC", "hostname": "Hostname", "dns_name": "DNS (PTR)", "modem_hostname": "Modem name", "ip": "IP", "interface": "Interface" } } }
       ]
     },
+
     {
       "id": 10,
       "type": "row",
-      "title": "WAN traffic",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 },
+      "title": "Traffic — LAN (modem Ethernet port)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
       "collapsed": false
     },
     {
       "id": 11,
       "type": "timeseries",
-      "title": "WAN throughput",
-      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
+      "title": "LAN port throughput (64-bit counters)",
+      "description": "Accurate 64-bit byte counters on the modem Ethernet port(s). This is the best available traffic measurement. RX = from switch to modem, TX = from modem to switch.",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 12 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
-          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "spanNulls": true }
-        }
+          "unit": "bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "spanNulls": true, "axisSoftMin": 0 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": ".*RX.*" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": ".*TX.*" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] }
+        ]
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max", "last"] },
-        "tooltip": { "mode": "multi" }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "8 * rate(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
-          "legendFormat": "Download"
-        },
-        {
-          "refId": "B",
-          "expr": "8 * rate(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__rate_interval]) / 1e6",
-          "legendFormat": "Upload"
-        }
+        { "refId": "A", "expr": "8 * rate(zte_lan_rx_bytes_total[$__rate_interval])", "legendFormat": "{{port}} RX (from switch)" },
+        { "refId": "B", "expr": "8 * rate(zte_lan_tx_bytes_total[$__rate_interval])", "legendFormat": "{{port}} TX (to switch)" }
       ]
     },
     {
       "id": 12,
       "type": "stat",
-      "title": "Downloaded (time range)",
-      "description": "Dashboard time picker (top right), e.g. Last 24h — not MTD and not modem reboot counter.",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 6 },
+      "title": "LAN Downloaded (time range)",
+      "description": "Modem to switch bytes in the dashboard time range.",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 12 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))"
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_lan_tx_bytes_total[$__range]))" }]
     },
     {
       "id": 13,
       "type": "stat",
-      "title": "Uploaded (time range)",
-      "description": "Upload bytes for the dashboard time picker only.",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 6 },
+      "title": "LAN Uploaded (time range)",
+      "description": "Switch to modem bytes in the dashboard time range.",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 12 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))"
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_lan_rx_bytes_total[$__range]))" }]
     },
     {
       "id": 14,
       "type": "timeseries",
-      "title": "WAN errors (per second)",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 10 },
+      "title": "LAN errors (per second)",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "ops", "custom": { "spanNulls": true } } },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "rate(zte_wan_errors_received_total{connection=\"$connection\"}[$__rate_interval])",
-          "legendFormat": "RX errors"
-        },
-        {
-          "refId": "B",
-          "expr": "rate(zte_wan_errors_sent_total{connection=\"$connection\"}[$__rate_interval])",
-          "legendFormat": "TX errors"
+        { "refId": "A", "expr": "rate(zte_lan_rx_errors_total[$__rate_interval])", "legendFormat": "RX err {{port}}" },
+        { "refId": "B", "expr": "rate(zte_lan_tx_errors_total[$__rate_interval])", "legendFormat": "TX err {{port}}" }
+      ]
+    },
+
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Traffic — WLAN (WiFi)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
+      "collapsed": false
+    },
+    {
+      "id": 41,
+      "type": "timeseries",
+      "title": "WLAN throughput per SSID",
+      "description": "WiFi interface traffic per SSID. RX = from WiFi clients to modem (uploads), TX = from modem to WiFi clients (downloads).",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "spanNulls": true, "axisSoftMin": 0 }
         }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        { "refId": "A", "expr": "8 * rate(zte_wlan_rx_bytes_total[$__rate_interval])", "legendFormat": "{{ssid}} ({{radio}}) RX" },
+        { "refId": "B", "expr": "8 * rate(zte_wlan_tx_bytes_total[$__rate_interval])", "legendFormat": "{{ssid}} ({{radio}}) TX" }
       ]
     },
     {
+      "id": 42,
+      "type": "stat",
+      "title": "WLAN Downloaded (time range)",
+      "description": "Modem to WiFi clients bytes.",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_wlan_tx_bytes_total[$__range]))" }]
+    },
+    {
+      "id": 43,
+      "type": "stat",
+      "title": "WLAN Uploaded (time range)",
+      "description": "WiFi clients to modem bytes.",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_wlan_rx_bytes_total[$__range]))" }]
+    },
+    {
+      "id": 44,
+      "type": "timeseries",
+      "title": "Per-client WiFi throughput",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "unit": "bps", "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true, "axisSoftMin": 0 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "expr": "8 * rate(zte_wlan_client_tx_bytes_total[$__rate_interval]) * on(mac) group_left(hostname, ip) topk by(mac) (1, zte_client_info_info)", "legendFormat": "{{hostname}} ({{ip}}) TX" },
+        { "refId": "B", "expr": "8 * rate(zte_wlan_client_rx_bytes_total[$__rate_interval]) * on(mac) group_left(hostname, ip) topk by(mac) (1, zte_client_info_info)", "legendFormat": "{{hostname}} ({{ip}}) RX" }
+      ]
+    },
+
+    {
       "id": 15,
       "type": "row",
-      "title": "Month to date (from 1st of month)",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "title": "Month to date",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
       "collapsed": false
     },
     {
       "id": 16,
       "type": "stat",
-      "title": "MTD Download (May 1 → now)",
-      "description": "Since 00:00 May 1. Requires Prometheus samples since month start (retention ≥ 31d).",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 15 },
+      "title": "MTD LAN Download",
+      "description": "LAN port download since start of month.",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
-      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]))",
-          "instant": true,
-          "range": false
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_lan_tx_bytes_total[$__range]))", "instant": true, "range": false }]
     },
     {
       "id": 17,
       "type": "stat",
-      "title": "MTD Upload (May 1 → now)",
-      "description": "Upload since start of month.",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 15 },
+      "title": "MTD LAN Upload",
+      "description": "LAN port upload since start of month.",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
-      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
-          "instant": true,
-          "range": false
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_lan_rx_bytes_total[$__range]))", "instant": true, "range": false }]
     },
     {
       "id": 18,
       "type": "stat",
-      "title": "MTD Total (May 1 → now)",
-      "description": "Download + upload since May 1.",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 15 },
+      "title": "MTD WLAN Download",
+      "description": "WiFi download since start of month.",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
-      "timeTo": "now",
       "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))",
-          "instant": true,
-          "range": false
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_wlan_tx_bytes_total[$__range]))", "instant": true, "range": false }]
     },
     {
       "id": 19,
       "type": "stat",
-      "title": "MTD Total (TB)",
-      "description": "MTD total in decimal terabytes (÷ 10¹²).",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 15 },
+      "title": "MTD WLAN Upload",
+      "description": "WiFi upload since start of month.",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "timeFrom": "now/M",
-      "timeTo": "now",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_wlan_rx_bytes_total[$__range]))", "instant": true, "range": false }]
+    },
+    {
+      "id": 45,
+      "type": "stat",
+      "title": "MTD Total (LAN+WLAN)",
+      "description": "Combined LAN + WLAN traffic since start of month.",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
+      "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(zte_lan_rx_bytes_total[$__range])) + sum(increase(zte_lan_tx_bytes_total[$__range])) + sum(increase(zte_wlan_rx_bytes_total[$__range])) + sum(increase(zte_wlan_tx_bytes_total[$__range]))", "instant": true, "range": false }]
+    },
+    {
+      "id": 46,
+      "type": "stat",
+      "title": "MTD Total (TB)",
+      "description": "Combined total in terabytes.",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "timeFrom": "now/M",
       "fieldConfig": { "defaults": { "unit": "none", "decimals": 4 } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(sum(increase(zte_wan_rx_bytes_total{connection=\"$connection\"}[$__range]) + increase(zte_wan_tx_bytes_total{connection=\"$connection\"}[$__range]))) / 1e12",
-          "instant": true,
-          "range": false
-        }
-      ]
+      "targets": [{ "refId": "A", "expr": "(sum(increase(zte_lan_rx_bytes_total[$__range])) + sum(increase(zte_lan_tx_bytes_total[$__range])) + sum(increase(zte_wlan_rx_bytes_total[$__range])) + sum(increase(zte_wlan_tx_bytes_total[$__range]))) / 1e12", "instant": true, "range": false }]
     },
+
     {
       "id": 20,
       "type": "row",
       "title": "Fiber / PON",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
       "collapsed": false
     },
     {
       "id": 21,
       "type": "timeseries",
       "title": "PON optical power",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 15 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 35 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
           "unit": "dBm",
           "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": -27 },
-              { "color": "green", "value": -25 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": -27 }, { "color": "green", "value": -25 }] }
         },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "RX" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "TX" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
-          }
+          { "matcher": { "id": "byName", "options": "RX" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "TX" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
         ]
       },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
@@ -558,33 +424,22 @@
       "id": 22,
       "type": "timeseries",
       "title": "PON temperature",
-      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 15 },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 35 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "celsius",
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true }
-        }
-      },
+      "fieldConfig": { "defaults": { "unit": "celsius", "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true } } },
       "targets": [{ "refId": "A", "expr": "zte_pon_temperature_celsius", "legendFormat": "Module temp" }]
     },
     {
       "id": 23,
       "type": "timeseries",
       "title": "PON voltage & bias",
-      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 15 },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 35 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": { "custom": { "drawStyle": "line", "spanNulls": true } },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Voltage" },
-            "properties": [{ "id": "unit", "value": "mvolt" }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Bias current" },
-            "properties": [{ "id": "unit", "value": "mamp" }]
-          }
+          { "matcher": { "id": "byName", "options": "Voltage" }, "properties": [{ "id": "unit", "value": "mvolt" }] },
+          { "matcher": { "id": "byName", "options": "Bias current" }, "properties": [{ "id": "unit", "value": "mamp" }] }
         ]
       },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
@@ -598,21 +453,9 @@
       "type": "stat",
       "title": "LOS",
       "description": "1 = loss of signal",
-      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 22 },
+      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 42 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "OK", "color": "green" },
-                "1": { "text": "LOS", "color": "red" }
-              }
-            }
-          ]
-        }
-      },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "OK", "color": "green" }, "1": { "text": "LOS", "color": "red" } } }] } },
       "options": { "colorMode": "background", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_pon_los" }]
     },
@@ -620,7 +463,7 @@
       "id": 25,
       "type": "stat",
       "title": "GPON reg status",
-      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 22 },
+      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 42 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_pon_gpon_reg_status" }]
@@ -629,33 +472,27 @@
       "id": 26,
       "type": "stat",
       "title": "PON uptime",
-      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 22 },
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 42 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": { "defaults": { "unit": "s" } },
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [{ "refId": "A", "expr": "zte_pon_uptime_seconds" }]
     },
+
     {
       "id": 30,
       "type": "row",
-      "title": "System & LAN",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+      "title": "System",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 45 },
       "collapsed": false
     },
     {
       "id": 31,
       "type": "timeseries",
       "title": "CPU & memory",
-      "gridPos": { "h": 7, "w": 10, "x": 0, "y": 26 },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 46 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true }
-        }
-      },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true } } },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         { "refId": "A", "expr": "zte_cpu_usage_percent", "legendFormat": "CPU {{core}}" },
@@ -663,129 +500,106 @@
       ]
     },
     {
-      "id": 32,
+      "id": 37,
       "type": "timeseries",
-      "title": "LAN port throughput",
-      "gridPos": { "h": 7, "w": 14, "x": 10, "y": 26 },
+      "title": "Temperature",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 46 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "unit": "Mbits",
-          "custom": { "drawStyle": "line", "fillOpacity": 5, "spanNulls": true }
+          "unit": "celsius",
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "spanNulls": true },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 60 }, { "color": "red", "value": 75 }] },
+          "custom.thresholdsStyle": { "mode": "line" }
         }
       },
-      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
-        {
-          "refId": "A",
-          "expr": "8 * rate(zte_lan_rx_bytes_total[$__rate_interval]) / 1e6",
-          "legendFormat": "In {{port}}"
-        },
-        {
-          "refId": "B",
-          "expr": "8 * rate(zte_lan_tx_bytes_total[$__rate_interval]) / 1e6",
-          "legendFormat": "Out {{port}}"
-        }
+        { "refId": "A", "expr": "zte_modem_temperature_celsius", "legendFormat": "SoC" },
+        { "refId": "B", "expr": "zte_pon_temperature_celsius", "legendFormat": "PON module" }
       ]
     },
+    {
+      "id": 38,
+      "type": "gauge",
+      "title": "Flash usage",
+      "gridPos": { "h": 7, "w": 4, "x": 16, "y": 46 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "zte_flash_usage_percent" }]
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "VoIP lines",
+      "gridPos": { "h": 7, "w": 4, "x": 20, "y": 46 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "Down", "color": "red" }, "1": { "text": "Up", "color": "green" } } }] } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "refId": "A", "expr": "zte_voip_line_up", "legendFormat": "{{line}}" }]
+    },
+
     {
       "id": 33,
       "type": "table",
       "title": "LAN ports",
-      "gridPos": { "h": 7, "w": 10, "x": 0, "y": 33 },
+      "gridPos": { "h": 5, "w": 12, "x": 0, "y": 53 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": { "custom": { "align": "auto" } },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Link" },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "0": { "text": "Down", "color": "red" },
-                      "1": { "text": "Up", "color": "green" }
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Speed Mbps" },
-            "properties": [{ "id": "unit", "value": "Mbits" }]
-          }
+          { "matcher": { "id": "byName", "options": "Link" }, "properties": [{ "id": "mappings", "value": [{ "type": "value", "options": { "0": { "text": "Down", "color": "red" }, "1": { "text": "Up", "color": "green" } } }] }] },
+          { "matcher": { "id": "byName", "options": "Speed Mbps" }, "properties": [{ "id": "unit", "value": "Mbits" }] }
         ]
       },
-      "options": {
-        "showHeader": true,
-        "sortBy": [{ "desc": false, "displayName": "Port" }]
-      },
+      "options": { "showHeader": true, "sortBy": [{ "desc": false, "displayName": "Port" }] },
       "targets": [
         { "refId": "A", "expr": "zte_lan_link_up", "format": "table", "instant": true, "legendFormat": "link" },
         { "refId": "B", "expr": "zte_lan_speed_mbps", "format": "table", "instant": true, "legendFormat": "speed" }
       ],
       "transformations": [
         { "id": "seriesToColumns", "options": { "byField": "port" } },
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "port": "Port",
-              "Value #A": "Link",
-              "Value #B": "Speed Mbps"
-            },
-            "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "__name__": true, "__name__ 1": true }
-          }
-        }
+        { "id": "organize", "options": { "renameByName": { "port": "Port", "Value #A": "Link", "Value #B": "Speed Mbps" }, "excludeByName": { "Time": true, "Time 1": true, "Time 2": true, "__name__": true, "__name__ 1": true } } }
       ]
     },
+
     {
-      "id": 34,
-      "type": "stat",
-      "title": "VoIP lines",
-      "gridPos": { "h": 7, "w": 6, "x": 10, "y": 33 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": { "text": "Down", "color": "red" },
-                "1": { "text": "Up", "color": "green" }
-              }
-            }
-          ]
-        }
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
-      "targets": [{ "refId": "A", "expr": "zte_voip_line_up", "legendFormat": "{{line}}" }]
-    },
-    {
-      "id": 35,
-      "type": "timeseries",
-      "title": "LAN errors (per second)",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 33 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "spanNulls": true } } },
-      "targets": [
+      "id": 60,
+      "type": "row",
+      "title": "WAN PPPoE (broken counters — reference only)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 58 },
+      "collapsed": true,
+      "panels": [
         {
-          "refId": "A",
-          "expr": "rate(zte_lan_rx_errors_total[$__rate_interval])",
-          "legendFormat": "RX err {{port}}"
+          "id": 61,
+          "type": "timeseries",
+          "title": "WAN PPPoE throughput (BROKEN)",
+          "description": "These PPPoE byte counters only count control-plane traffic on this firmware. NOT actual internet data.",
+          "gridPos": { "h": 8, "w": 16, "x": 0, "y": 59 },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": { "defaults": { "unit": "bps", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "spanNulls": true } } },
+          "targets": [
+            { "refId": "A", "expr": "avg_over_time(zte_wan_rx_bps{connection=\"internet\"}[$__rate_interval])", "legendFormat": "PPPoE RX" },
+            { "refId": "B", "expr": "avg_over_time(zte_wan_tx_bps{connection=\"internet\"}[$__rate_interval])", "legendFormat": "PPPoE TX" }
+          ]
         },
         {
-          "refId": "B",
-          "expr": "rate(zte_lan_tx_errors_total[$__rate_interval])",
-          "legendFormat": "TX err {{port}}"
+          "id": 62,
+          "type": "timeseries",
+          "title": "WAN errors & packets",
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 59 },
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "fieldConfig": { "defaults": { "unit": "cps", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+          "targets": [
+            { "refId": "A", "expr": "rate(zte_wan_errors_received_total{connection=\"internet\"}[$__rate_interval])", "legendFormat": "RX errors/s" },
+            { "refId": "B", "expr": "rate(zte_wan_errors_sent_total{connection=\"internet\"}[$__rate_interval])", "legendFormat": "TX errors/s" }
+          ]
         }
       ]
     }
